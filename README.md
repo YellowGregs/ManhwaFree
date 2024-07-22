@@ -1,2 +1,4 @@
 # MC-scrapper-template
-Uses the api scrapper of manhwa clan and made it into a website.
+Just a template to test this API: [ManhwaClan-Scrapper](https://github.com/YellowGregs/ManhwaClan-Scrapper)
+
+[Live Demo](https://mc-scrapper-template.vercel.app/)
