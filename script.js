@@ -1,3 +1,8 @@
+let currentPage = 1;
+let totalPages = 1;
+let currentQuery = '';
+let currentManga = {};
+
 document.addEventListener('DOMContentLoaded', () => {
     const page = document.body.id;
     switch (page) {
@@ -15,8 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initSearch() {
     document.getElementById('searchButton').addEventListener('click', () => {
-        const query = document.getElementById('searchInput').value;
-        search(query);
+        currentQuery = document.getElementById('searchInput').value;
+        currentPage = 1;
+        search(currentQuery, currentPage);
     });
 }
 
@@ -64,10 +70,12 @@ function initChapter() {
     getChapterDetails(mangaTitle, chapter);
 }
 
-async function search(query) {
-    const response = await fetch(`https://manhwa-clan.vercel.app/api/search/${encodeURIComponent(query)}`);
+async function search(query, page) {
+    const response = await fetch(`https://manhwa-clan.vercel.app/api/search/${encodeURIComponent(query)}/${page}`);
     const data = await response.json();
+    totalPages = data.pagination.totalPages;
     showResults(data.results);
+    updatePaginationControls();
 }
 
 function showResults(results) {
@@ -85,6 +93,28 @@ function showResults(results) {
     document.getElementById('searchResults').classList.remove('hidden');
 }
 
+function updatePaginationControls() {
+    const prevButton = document.getElementById('prevPageButton');
+    const nextButton = document.getElementById('nextPageButton');
+
+    prevButton.classList.toggle('hidden', currentPage === 1);
+    nextButton.classList.toggle('hidden', currentPage >= totalPages);
+
+    prevButton.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            search(currentQuery, currentPage);
+        }
+    };
+
+    nextButton.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            search(currentQuery, currentPage);
+        }
+    };
+}
+
 async function getMangaDetails(apiUrl) {
     const response = await fetch(apiUrl);
     const data = await response.json();
@@ -93,23 +123,26 @@ async function getMangaDetails(apiUrl) {
 
 async function showMangaDetails(details) {
     currentManga = details;
-    const imageUrl = await getHighQualityImage(details.imageUrl); 
-    document.getElementById('mangaTitle').textContent = details.mangaTitle;
+
+    const imageUrl = details.imageUrl ? await getHighQualityImage(details.imageUrl) : 'https://via.placeholder.com/150';
+    document.getElementById('mangaTitle').textContent = details.mangaTitle || 'Title not available';
+
     document.getElementById('mangaCover').src = imageUrl;
     document.getElementById('mangaSummary').textContent = details.summary || "No summary available.";
-    document.getElementById('mangaGenres').textContent = details.genres.join(', ');
-    document.getElementById('mangaRating').textContent = details.rating;
-    document.getElementById('mangaStatus').textContent = details.status;
+    document.getElementById('mangaGenres').textContent = details.genres ? details.genres.join(', ') : 'No genres available';
+    document.getElementById('mangaRating').textContent = details.rating || 'No rating available';
+    document.getElementById('mangaStatus').textContent = details.status || 'Status unknown';
 
     const chapterSelect = document.getElementById('chapterSelect');
     chapterSelect.innerHTML = '';
-    for (let i = 1; i <= details.chapters; i++) {
+    for (let i = 1; i <= (details.chapters || 0); i++) {
         const option = document.createElement('option');
         option.value = i;
         option.textContent = `Chapter ${i}`;
         chapterSelect.appendChild(option);
     }
 }
+
 
 async function getHighQualityImage(imageUrl) {
     const response = await fetch(`https://manhwa-clan.vercel.app/api/image?url=${encodeURIComponent(imageUrl)}`);
