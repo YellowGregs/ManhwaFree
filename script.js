@@ -33,7 +33,7 @@ function initDetails() {
 
     const urlParams = new URLSearchParams(window.location.search);
     const mangaTitle = urlParams.get('title');
-    getMangaDetails(`https://manhwa-clan.vercel.app/api/${mangaTitle}/details`);
+    getMangaDetails(`https://manhwa-clan.vercel.app/api/${encodeURIComponent(mangaTitle)}/details`);
 }
 
 function initChapter() {
@@ -96,7 +96,7 @@ async function showMangaDetails(details) {
     const imageUrl = await getHighQualityImage(details.imageUrl); 
     document.getElementById('mangaTitle').textContent = details.mangaTitle;
     document.getElementById('mangaCover').src = imageUrl;
-    document.getElementById('mangaSummary').textContent = details.summary;
+    document.getElementById('mangaSummary').textContent = details.summary || "No summary available.";
     document.getElementById('mangaGenres').textContent = details.genres.join(', ');
     document.getElementById('mangaRating').textContent = details.rating;
     document.getElementById('mangaStatus').textContent = details.status;
