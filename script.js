@@ -32,7 +32,7 @@ function initSearch() {
 
 async function search(query, page = 1) {
     try {
-        const apiUrl = `/api/search?s=${encodeURIComponent(query)}&page=${page}`;
+        const apiUrl = `https://manhwaclan-mauve.vercel.app/api/search?s=${encodeURIComponent(query)}&page=${page}`;
         const response = await fetch(apiUrl);
 
         if (!response.ok) {
