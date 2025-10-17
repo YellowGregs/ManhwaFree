@@ -1,3 +1,5 @@
+const API_BASE = 'https://manhwaclan-mauve.vercel.app';
+
 let currentPage = 1;
 let totalPages = 1;
 let currentQuery = '';
@@ -32,7 +34,7 @@ function initSearch() {
 
 async function search(query, page = 1) {
     try {
-        const apiUrl = `https://manhwaclan-mauve.vercel.app/api/search?s=${encodeURIComponent(query)}&page=${page}`;
+        const apiUrl = `${API_BASE}/api/search?s=${encodeURIComponent(query)}&page=${page}`;
         const response = await fetch(apiUrl);
 
         if (!response.ok) {
@@ -57,6 +59,7 @@ async function search(query, page = 1) {
 function showResults(results) {
     const resultsList = document.getElementById('resultsList');
     resultsList.innerHTML = '';
+
     if (!results.length) {
         resultsList.innerHTML = '<li>No results found</li>';
         document.getElementById('searchResults').classList.remove('hidden');
@@ -67,8 +70,8 @@ function showResults(results) {
         const li = document.createElement('li');
         li.textContent = result.title;
         li.addEventListener('click', () => {
-            const mangaSlug = result.url.split('/').pop();
-            window.location.href = `details.html?slug=${mangaSlug}`;
+            const slug = result.url.split('/').pop();
+            window.location.href = `details.html?slug=${slug}`;
         });
         resultsList.appendChild(li);
     });
@@ -117,7 +120,7 @@ function initDetails() {
 
 async function getMangaDetails(slug) {
     try {
-        const response = await fetch(`/manga/${slug}`);
+        const response = await fetch(`${API_BASE}/manga/${slug}`);
         if (!response.ok) throw new Error(`Failed to fetch manga details: ${response.status}`);
 
         const data = await response.json();
@@ -130,7 +133,7 @@ async function getMangaDetails(slug) {
 }
 
 async function showMangaDetails(details) {
-    document.getElementById('mangaTitle').textContent = details.mangaTitle || 'Title not available';
+    document.getElementById('mangaTitle').textContent = details.mangaUrl?.split('/').pop() || 'Title not available';
     const imageUrl = details.image ? await getImage(details.image) : 'https://via.placeholder.com/150';
     document.getElementById('mangaCover').src = imageUrl;
     document.getElementById('mangaSummary').textContent = details.summary || 'No summary available';
@@ -142,8 +145,8 @@ async function showMangaDetails(details) {
     chapterSelect.innerHTML = '';
     (details.chapters || []).forEach(ch => {
         const option = document.createElement('option');
-        option.value = ch.chapterUrl.split('/').pop();
-        option.textContent = ch.chapterTitle;
+        option.value = ch.latest_chapter_url?.split('/').pop() || '';
+        option.textContent = ch.latest_chapter || 'Chapter';
         chapterSelect.appendChild(option);
     });
 }
@@ -170,12 +173,12 @@ function initChapter() {
 
 async function getChapterDetails(slug, chapter) {
     try {
-        const response = await fetch(`/manga/${slug}/${chapter}`);
+        const response = await fetch(`${API_BASE}/manga/${slug}/${chapter}`);
         if (!response.ok) throw new Error(`Failed to fetch chapter: ${response.status}`);
         const data = await response.json();
 
         updateChapterDropdowns(slug, data);
-        showChapterImages(data.images);
+        showChapterImages(data.images || []);
     } catch (err) {
         console.error(err);
         alert('Failed to load chapter images.');
@@ -191,7 +194,8 @@ function updateChapterDropdowns(slug, data) {
         option.textContent = ch;
         chapterDropdown.appendChild(option);
     });
-    chapterDropdown.value = new URLSearchParams(window.location.search).get('chapter');
+    const currentChapter = new URLSearchParams(window.location.search).get('chapter');
+    chapterDropdown.value = currentChapter;
 }
 
 async function showChapterImages(images) {
@@ -206,7 +210,7 @@ async function showChapterImages(images) {
 
 async function getImage(url) {
     try {
-        const res = await fetch(`/api/image?url=${encodeURIComponent(url)}`);
+        const res = await fetch(`${API_BASE}/api/image?url=${encodeURIComponent(url)}`);
         const blob = await res.blob();
         return URL.createObjectURL(blob);
     } catch (err) {
@@ -216,11 +220,11 @@ async function getImage(url) {
 }
 
 function navigateChapter(slug, currentChapter, direction) {
-    let chapters = Object.keys(currentManga.chapters || {});
-    let index = chapters.indexOf(currentChapter);
+    const chapters = currentManga.chapters?.map(c => c.latest_chapter_url?.split('/').pop()) || [];
+    const index = chapters.indexOf(currentChapter);
     if (index === -1) return;
-    index += direction;
-    if (index >= 0 && index < chapters.length) {
-        window.location.href = `chapter.html?slug=${slug}&chapter=${chapters[index]}`;
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < chapters.length) {
+        window.location.href = `chapter.html?slug=${slug}&chapter=${chapters[newIndex]}`;
     }
 }
