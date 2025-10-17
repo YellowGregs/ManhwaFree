@@ -83,22 +83,25 @@ function updatePaginationControls() {
     const prevButton = document.getElementById('prevPageButton');
     const nextButton = document.getElementById('nextPageButton');
 
-    prevButton.classList.toggle('hidden', currentPage <= 1);
-    nextButton.classList.toggle('hidden', currentPage >= totalPages);
+    if (prevButton) {
+        prevButton.classList.toggle('hidden', currentPage <= 1);
+        prevButton.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                search(currentQuery, currentPage);
+            }
+        };
+    }
 
-    prevButton.onclick = () => {
-        if (currentPage > 1) {
-            currentPage--;
-            search(currentQuery, currentPage);
-        }
-    };
-
-    nextButton.onclick = () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            search(currentQuery, currentPage);
-        }
-    };
+    if (nextButton) {
+        nextButton.classList.toggle('hidden', currentPage >= totalPages);
+        nextButton.onclick = () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                search(currentQuery, currentPage);
+            }
+        };
+    }
 }
 
 function initDetails() {
